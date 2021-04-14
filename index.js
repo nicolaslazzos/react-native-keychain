@@ -4,9 +4,11 @@ import { NativeModules, Platform } from 'react-native';
 const { RNKeychainManager } = NativeModules;
 
 export const SECURITY_LEVEL = Object.freeze({
-  ANY: RNKeychainManager.SECURITY_LEVEL_ANY,
-  SECURE_SOFTWARE: RNKeychainManager.SECURITY_LEVEL_SECURE_SOFTWARE,
-  SECURE_HARDWARE: RNKeychainManager.SECURITY_LEVEL_SECURE_HARDWARE,
+  ANY: RNKeychainManager && RNKeychainManager.SECURITY_LEVEL_ANY,
+  SECURE_SOFTWARE:
+    RNKeychainManager && RNKeychainManager.SECURITY_LEVEL_SECURE_SOFTWARE,
+  SECURE_HARDWARE:
+    RNKeychainManager && RNKeychainManager.SECURITY_LEVEL_SECURE_HARDWARE,
 });
 
 export const ACCESSIBLE = Object.freeze({
@@ -118,7 +120,7 @@ const AUTH_PROMPT_DEFAULTS = {
   cancel: 'Cancel',
 };
 
-function normalizeServiceOption(serviceOrOptions?: string | Options) {
+function normalizeServiceOption(serviceOrOptions?: string | Options): Options {
   if (typeof serviceOrOptions === 'string') {
     console.warn(
       `You passed a service string as an argument to one of the react-native-keychain functions.
@@ -208,6 +210,14 @@ export function resetGenericPassword(
 }
 
 /**
+ * Gets all `service` keys used in keychain entries.
+ * @return {Promise} Resolves to an array of strings
+ */
+export async function getAllGenericPasswordServices(): Promise<string[]> {
+  return RNKeychainManager.getAllGenericPasswordServices();
+}
+
+/**
  * Checks if we have a login combination for `server`.
  * @param {string} server URL to server.
  * @return {Promise} Resolves to `{service, storage}` when successful
@@ -267,17 +277,13 @@ export function resetInternetCredentials(server: string): Promise<void> {
 }
 
 /**
- * Get what type of hardware biometry support the device has.
+ * Get what type of Class 3 (strong) biometry support the device has.
  * @param {object} options An Keychain options object.
  * @return {Promise} Resolves to a `BIOMETRY_TYPE` when supported, otherwise `null`
  */
 export function getSupportedBiometryType(): Promise<null | SecBiometryType> {
   if (!RNKeychainManager.getSupportedBiometryType) {
     return Promise.resolve(null);
-  }
-
-  if (Platform.OS === 'ios') {
-    return RNKeychainManager.getSupportedBiometryType();
   }
 
   return RNKeychainManager.getSupportedBiometryType();
@@ -377,6 +383,7 @@ export default {
   resetInternetCredentials,
   setGenericPassword,
   getGenericPassword,
+  getAllGenericPasswordServices,
   resetGenericPassword,
   requestSharedWebCredentials,
   setSharedWebCredentials,
